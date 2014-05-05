@@ -77,6 +77,8 @@
 				});
 			}
 
+			var chartObject;
+
 			function showChart(female, male)
 			{
 				var pieData = [{
@@ -88,7 +90,12 @@
 					color : "#63B1FF"
 				}];
 
-				var myPie = new Chart(document.getElementById("canvas").getContext("2d")).Pie(pieData);
+				if (chartObject == null) {
+					var interestContext = $("#canvas").get(0).getContext("2d");
+					chartObject = new Chart(interestContext);
+				};
+
+				chartObject.Pie(pieData);
 			}
 
 			function animateChart(json)
@@ -108,7 +115,7 @@
 				var tip;
 
 				if (ratio < 1 ) 		tip = "furada";
-				else if (ratio > 1.5) 	tip = "promissor";
+				else if (ratio > 1.3) 	tip = "promissor";
 				else if (ratio > 1.9)	tip = "simplesmente vá";
 				else 					tip = "normal";
 

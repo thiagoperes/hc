@@ -1,0 +1,196 @@
+<html lang="en">
+<head>
+	<title>Hottie Checker</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+	<link href="css/starter-template.css" rel="stylesheet" media="screen">
+	<style type="text/css">
+		.secondary-info {
+			color: rgba(92, 92, 92, 1);
+		}
+	</style>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
+	<script src="js/Chart.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script src="js/respond.js"></script>
+	<script>
+		$(document).ready(function() {
+			$.ajaxSetup({ cache: true });
+			$.getScript('http://connect.facebook.net/en_US/all.js', function(){
+				FB.init({
+					appId: '288305071271536',
+				});     
+				$('#loginbutton,#feedbutton').removeAttr('disabled');
+			});
+
+			// Here we run a very simple test of the Graph API after login is successful. 
+		  	// This testAPI() function is only called in those cases. 
+		  	function testAPI() {
+		  		console.log('Welcome!  Fetching your information.... ');
+		  		FB.api('/me', function(response) {
+		  			console.log('Good to see you, ' + response.name + '.');
+		  		});
+		  	}
+
+			function requestEventStats(eventId){
+				var fql_query = 'SELECT sex FROM user WHERE uid IN (SELECT uid FROM event_member WHERE eid = ' + eventId + ' and rsvp_status = "attending")'
+
+				var eventInformation = {};
+
+				FB.api({
+					method: 'fql.query',
+					query: fql_query,
+				}, function(response){
+					//console.log(JSON.stringify(response));
+
+					var results = {
+						"male" : 0, 
+						"female" : 0, 
+						"total" : 0
+					};
+
+					for (var i = response.length - 1; i >= 0; i--) {
+						if (response[i]["sex"] == "male") {
+							results["male"] += 1;
+						} else {
+							results["female"] += 1;
+						}
+						results["total"] += 1;
+					};
+
+					results["male_percent"] = (results["male"]*100 / results["total"]).toFixed(2);
+					results["female_percent"] = (results["female"]*100 / results["total"]).toFixed(2);
+					results["female_male_ratio"] = (results["female"] / results["male"]).toFixed(2);
+
+					$.extend(eventInformation, results);
+
+					FB.api({
+						method: 'fql.query',
+						query: 'SELECT name, attending_count, unsure_count, all_members_count FROM event WHERE eid = ' + eventId
+					}, function(response){
+						$.extend(eventInformation, response["0"]);
+
+						console.log(JSON.stringify(eventInformation));
+
+						displayResults(eventInformation);
+					});
+				});
+			}
+
+			function showChart(female, male)
+			{
+				var pieData = [{
+					value: female,
+					color:"#FC72D0"
+				},
+				{
+					value : male,
+					color : "#63B1FF"
+				}];
+
+				var myPie = new Chart(document.getElementById("canvas").getContext("2d")).Pie(pieData);
+			}
+
+			function animateChart(json)
+			{
+				showChart(json["female"], json["male"]);
+				document.getElementById("male_percent").innerHTML = json["male_percent"] + "%";
+				document.getElementById("female_percent").innerHTML = json["female_percent"] + "%";
+				document.getElementById("chart_container").style.display = "block"
+				$('#female_container').delay(1000).fadeIn();
+				$('#male_container').delay(1000).fadeIn();
+			}
+
+			function displayResults(json)
+			{
+				animateChart(json);
+				var ratio = json['female_male_ratio'];
+				var tip;
+
+				if (ratio < 1 ) 		tip = "furada";
+				else if (ratio > 1.5) 	tip = "promissor";
+				else if (ratio > 1.9)	tip = "simplesmente vá";
+				else 					tip = "normal";
+
+				$('#event_name').html(json["name"]);
+				$('#ratio').html(ratio + " mulheres/homem " + '(' + tip + ')');
+				$('#total').html("de " + json['attending_count'] + " pessoas confirmadas. " + json['unsure_count'] + " talvez.");
+			}
+
+			$(".load-button").on('click', function () {
+				var eventValue=document.getElementById("event").value;
+				var regex = /^https:\/\/www\.facebook\.com\/events\/(\d+)(.*)?$/;
+				eventValue = eventValue.match(regex, '')[1];
+
+				// TODO: Check if eventValue contains a valid event identifier
+				FB.getLoginStatus(function(response){
+					if (response.status == 'connected') {
+						requestEventStats(eventValue);
+					} else {
+						FB.login(function(response) {
+							// TODO: Check for other response statuses
+							if (response.status == 'connected') {
+								requestEventStats(eventValue);
+							}
+						}, {scope: ''});
+					}					
+				});
+			});
+		});
+</script>
+</head>
+
+<body>
+	<div id="fb-root"></div>
+	  <div class="container">
+	  	<div class="row">
+	  		<div class="col-lg-6 offset col-offset-3">
+	  			<img src="img/header.png" width="80%" style="margin-bottom: 20px; margin-left: auto; margin-right: auto; display: block;" class="img-rounded"></img>
+	  			<p class="text-center">Copie e cole o URL do evento do Facebook na barra abaixo</p>
+
+	  			<form method="GET">
+	  				<fieldset>
+	  					<div class="input-group">
+	  						<input type="text" class="form-control" placeholder="Enter Event URL" value="https://www.facebook.com/events/290470821099755/" name="event" id="event">
+	  						<span class="input-group-btn">
+	  							<button class="btn btn-default load-button" type="button">Enviar</button>
+	  						</span>
+	  					</div>
+	  				</fieldset>
+	  			</form>
+	  		</div>
+	  	</div>
+	  	<div class="row">
+	  		<div class="col-lg-6 col-offset-3">
+	  			<div class="row">
+	  				<h5 id="event_name" style="text-align: center"></h5>
+	  			</div>
+	  			<div class="row">
+	  				<div class="col-lg-4 text-center">
+	  					<div id="male_container" style="display: none">
+	  						<h2 id="male_percent">10</h2>
+	  						<h3>Homens</h3>
+	  					</div>
+	  				</div>
+	  				<div class="col-lg-4 text-center" id="chart_container" style="display: none;">
+	  					<canvas id="canvas" height="150px" width="150px" class="chart"></canvas>
+	  				</div>
+	  				<div class="col-lg-4 text-center">
+	  					<div id="female_container" style="display: none">
+	  						<h2 id="female_percent">10</h2>
+	  						<h3>Mulheres</h3>
+	  					</div>
+	  				</div>
+	  			</div>
+	  			<div class="row">
+	  				<h5 class="secondary-info" id="total" style="text-align: center"></h5>
+	  				<h5 class="secondary-info" id="ratio" style="text-align: center"></h5>
+	  			</div>
+	  		</div>
+	  	</div>
+	  </div>
+	</body>
+
+	</html>

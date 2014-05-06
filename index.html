@@ -121,7 +121,7 @@
 
 				$('#event_name').html(json["name"]);
 				$('#ratio').html(ratio + " mulheres/homem " + '(' + tip + ')');
-				$('#total').html("de " + json['attending_count'] + " pessoas confirmadas. " + json['unsure_count'] + " talvez.");
+				$('#total').html(json['attending_count'] + " pessoas confirmadas. " + json['unsure_count'] + " talvez.");
 			}
 
 			$(".load-button").on('click', function () {
@@ -159,7 +159,7 @@
 	  			<form method="GET">
 	  				<fieldset>
 	  					<div class="input-group">
-	  						<input type="text" class="form-control" placeholder="Enter Event URL" value="https://www.facebook.com/events/290470821099755/" name="event" id="event">
+	  						<input type="text" class="form-control" placeholder="Enter Event URL" value="https://www.facebook.com/events/1413025732297103/" name="event" id="event">
 	  						<span class="input-group-btn">
 	  							<button class="btn btn-default load-button" type="button">Enviar</button>
 	  						</span>

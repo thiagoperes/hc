@@ -126,7 +126,8 @@
 
 			$(".load-button").on('click', function () {
 				var eventValue=document.getElementById("event").value;
-				var regex = /^https:\/\/www\.facebook\.com\/events\/(\d+)(.*)?$/;
+				var regex = /^(?:http|https):\/\/(?:www|m)\.facebook\.com\/events\/(\d+)(.*)?$/;
+				console.log(eventValue.match(regex, ''));
 				eventValue = eventValue.match(regex, '')[1];
 
 				// TODO: Check if eventValue contains a valid event identifier
